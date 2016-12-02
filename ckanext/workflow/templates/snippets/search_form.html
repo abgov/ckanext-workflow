@@ -1,0 +1,76 @@
+{% ckan_extends %}
+{# {% ckan_extends 'snippets/search_form.html' %} #}
+{{ super() }}
+
+{% block search_title %}
+{% endblock %}
+
+{% block search_input %}
+    <div class="row">
+        {% block search_input_button %}{% endblock %}
+        {% if not no_title %}
+        <div class="col-xs-12"><h2>{% snippet 'snippets/search_result_text.html', query=query, count=count, type=type %}</h2></div>
+        {% endif %}
+
+        {% if facets %}
+        <div class="col-xs-12">
+            <p class="filter-list">
+                {% for field in facets.fields %}
+                {% set search_facets_items = facets.search.get(field)['items'] %}
+                <span class="facet">{{ facets.titles.get(field) }}:</span>
+                {% for value in facets.fields[field] %}
+                <span class="filtered pill">
+                    {%- if facets.translated_fields and facets.translated_fields.has_key((field,value)) -%}
+                    {{ facets.translated_fields[(field,value)] }}
+                    {%- else -%}
+                    {{ h.list_dict_filter(search_facets_items, 'name', 'display_name', value) }}
+                    {%- endif %}
+                    <a href="{{ facets.remove_field(field, value) }}" class="remove" title="{{ _('Remove') }}"><i class="icon-remove"></i></a>
+                </span>
+                {% endfor %}
+                {% endfor %}
+            </p>
+        </div>
+        {% endif %}
+        {% if sorting %}
+            {% if count != 0 %}
+                <div class="col-xs-12">
+                    <a class="btn btn-primary expand hidden-md hidden-lg hidden-xl" href="javascript:void(0);" onclick="toggleFilters()">Filter Results</a>
+                    <div class="control-group control-order-by form-group">
+                        <label for="field-order-by" class="expand">{{ _('Sort Results by') }}</label>
+                        <select id="field-order-by" class="form-control wd-80" name="sort">
+                            {% for label, value in sorting %}
+                            {% if label and value %}
+                            <option value="{{ value }}"{% if sorting_selected == value %} selected="selected"{% endif %}>{{ label }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% if  c.process_state %}
+                    <input type="hidden" name='ext_field-filters' value="on" />
+                    <input type="hidden" name='ext_field-filters-select' value="{{ c.process_state }}" />
+                {% endif %}
+                {% if c.action_multi %}
+                    <input type="hidden" name='ext_field-actions' value="on" />
+                    <input type="hidden" name='ext_field-actions-select' value="{{ c.action_multi }}" />
+                {% endif %}
+            {% else %}
+                <div class="col-xs-12">
+                <p>Didn’t find what you were looking for? Help us expand our portal and <a target="_blank" href="{{ h.url_for('/suggest') }}">suggest a resource</a>.</p>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block search_facets %}{% endblock %}
+{% block search_sortby %}{% endblock %}
+
+{% if show_empty and count == 0 %}
+    <p class="extra">Please try another search........</p>
+{% endif %}
+
+
+
+

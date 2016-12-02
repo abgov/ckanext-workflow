@@ -1,0 +1,32 @@
+.process_state_draft { 
+  background-color: #ff9900; 
+}
+
+.process_state_modified { 
+  background-color: #0066ff; 
+}
+
+.process_state_submitted { 
+  background-color: #9900cc; 
+}
+
+.process_state_pending { 
+  background-color: #804000; 
+}
+
+.process_state_rejected { 
+  background-color: #ff3300; 
+}
+
+.process_state_approved { 
+  background-color: #00b300; 
+}
+
+.lable-danger-item-actions { 
+  color: #d9534f; 
+}
+
+td {
+	display: inline-block;
+    vertical-align: middle;
+}

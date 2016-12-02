@@ -1,0 +1,6 @@
+{% ckan_extends %}
+
+{% block content_primary_nav %}
+  {{ super() }}
+  {{ h.build_nav_icon('authorized_members', _('Work Flow'), id=c.group_dict.name) }}
+{% endblock %}

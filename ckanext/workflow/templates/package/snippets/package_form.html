@@ -1,0 +1,26 @@
+{% ckan_extends %}
+
+{% block form_actions %}
+  {% resource "workflow/js/create_metadata_only.js" %}
+  <div class="form-actions">
+    {{ form.required_message() }} <br/><br/>
+    
+    {% block delete_button %}
+      {{ super() }}
+    {% endblock %}
+    {% block save_metadata_only_button %}
+        <button class="btn btn-primary" type="submit" name="save" value='go-read' data-module='create_metadata_only'>{{ _('Save Metadata Only') }}</button>
+    {% endblock %}
+    {% block save_button %}
+        <button class="btn btn-primary" type="submit" name="save">{% block save_button_text %}{{ _('Save & Next: Add Resource') }}{% endblock %}</button>
+    {% endblock %}
+    {% block cancel_button %}
+        <a class="btn btn-primary" href="{% url_for controller='package', action='read', id=data.id %}">{% block cancel_button_text %}{{ _('Cancel') }}{% endblock %}</a>
+    {% endblock %} 
+    <br/><br/>
+
+    {% block disclaimer %}
+      {{ super() }}
+    {% endblock %}
+  </div>
+{% endblock %}

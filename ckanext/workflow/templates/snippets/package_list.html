@@ -1,0 +1,176 @@
+{% ckan_extends %}
+{# {% ckan_extends 'snippets/package_list.html' %} #}
+{#
+   params: org: name of organization
+
+#}
+{#% import 'macros/form.html' as form %#}
+{{ super() }}
+
+
+{% if c.action_multi %}  
+    {% set value = _(c.action_multi) %}
+    {% set class = "btn btn-danger" %}
+    {% set notice = '{"content": "Are you sure you want to ' +  c.action_multi.lower() + ' these datasets?"}' %}
+{% else %}
+    {% set value = _("") %}
+    {% set class = "btn btn-danger collapse" %}
+    {% set notice = "" %}
+{% endif %}
+
+{% macro all_dataset_url(org='', url='') -%}
+    {%- if org and 'organization' in url -%}
+    	{%- set all_url = h.url_for(controller='organization', action='read', id=org) -%}
+    {%- elif not org and 'dashboard' in url -%} 
+        {%- set all_url = h.url_for(controller='user', action='dashboard_datasets') -%}
+	{%- else -%}
+	    {%- set all_url = h.url_for(controller='package', action='search') -%}
+	{%- endif -%}
+    data-module-url_all_ds="{{ all_url }}"
+{%- endmacro %}
+
+{% macro url(org='', url='') -%}
+	{%- if org and 'organization' in url -%}
+        {%- set url = h.url_for('organization-filter-action', id=org)  -%}
+    {%- elif not org and 'dashboard' in url -%}
+        {%- set url = h.url_for('dashboard-filter-action')  -%}
+    {%- elif 'opendata' in url -%}
+        {%- set url = h.url_for('opendata-filter-action')  -%}
+    {%- elif 'publications' in url -%}
+        {%- set url = h.url_for('publications-filter-action')  -%}
+    {%- endif -%}
+	{{ url }}
+{%- endmacro %}
+
+{% macro action_url(action='') -%}
+     {%- if action  -%}
+        {%- set url = h.url_for(action|lower + "-multiple")  -%}
+    {%- else -%}
+        {%- set url = "" -%}
+    {%- endif -%}
+    {{ url }}
+{%- endmacro %}
+
+{% block package_list %}
+  <div class="form">
+	  <form action="{{ url(org=org, url=h.full_current_url()) }}" method="post" id="form_action_filter">
+	  	  {% block organization %}
+             <input type='hidden' id="ext_field-hide-org" name="ext_field-hide-org" value="{{  org if org  }}" />
+	  	  {% endblock %}
+	  	  {% block filter_action %}
+		  	  {% if ('/dashboard/' in h.full_current_url() or '/organization/' in h.full_current_url()) 
+		  	        and h.ab_ps_current_user_name()  %}
+		  	  {# if we want filtering and action on opendata and publications also, we can comment the above if command #}
+			  	  {% block filters %}
+			  	   
+		          {% resource 'workflow/js/filters_multiple_datasets.js' %}
+		            <div class="control-group">
+		            	<table>
+		            	<tr>
+		            	<td>
+		                <input type="checkbox" 
+		                       id="ext_field-filters" 
+		                       name="ext_field-filters"
+		                       {%- for ps in h.ab_ps_get_all_process_states(h.ab_ps_get_dataset_types()[0]) -%}
+		                          {%- if c.process_state == ps -%} checked="checked"{%- endif -%}
+		                       {%- endfor -%}
+		                       data-module="filters"
+		                       {{ all_dataset_url(org=org, url=h.full_current_url()) }}
+		                       />
+		                </td>
+		                <td>
+		                  <label class="control-label" for="ext_ext_field-filters-select" form="form_filter">{{ _('Filters') }}&nbsp;&nbsp;&nbsp;</label>
+		                </td> 
+		                <td> 
+		                  <select id="ext_field-filters-select" 
+		                          name="ext_field-filters-select"
+		                          data-module="filters_select"
+		                          >
+		                          {% for ps in h.ab_ps_get_all_process_states(h.ab_ps_get_dataset_types()[0]) %}
+			                        <option value="{{ ps }}" {%- if c.process_state == ps -%} {{ "selected" }} {%- endif -%} > {{ _(ps) }}</option>
+			                      {% endfor %}
+		                  </select>
+		                </td>
+		                </tr>
+		                </table>
+		            </div>
+		          {% endblock %}
+			  	  {% block actions %}
+		            {% resource 'workflow/js/actions_multiple_datasets.js' %}
+		            {% resource 'workflow/js/confirm_actions.js' %}
+		            <div class="control-group">
+		            	<table>
+		            	<tr>
+		            	<td class="process_state_td">
+		                <input type="checkbox" 
+		                       id="ext_field-actions" 
+		                       name="ext_field-actions"
+		                       {% if c.action_multi %} checked="checked"{% endif %}
+		                       data-module="actions"
+		                       {{ all_dataset_url(org=org, url=h.full_current_url()) }}
+		                   />
+		                </td>
+		                <td>
+		                   <label class="control-label" for="ext_field-actions-select">{{ _('Actions') }}</label>
+		                </td>
+		                <td>
+		                  <select id="ext_field-actions-select" 
+		                          name="ext_field-actions-select" 
+		                          data-module="actions_select"
+		                          >
+		                          {%- if org and h.ab_ps_allow_full_work_flow(h.ab_ps_current_user_name(), org) or not org -%}
+			                        <option value="Deactivate" {%- if c.action_multi  == "Deactivate" -%} {{ "selected" }} {%- endif -%}>{{ _("Deactivate") }}</option>
+			                        <option value="Reactivate" {%- if c.action_multi  == "Reactivate" -%} {{ "selected" }} {%- endif -%}>{{ _("Reactivate") }}</option>
+			                      {% endif %}
+		                          <option value="Delete"  {%- if c.action_multi == "Delete" -%} {{ "selected" }} {%- endif -%}>{{ _("Delete") }}</option>
+		                  </select>
+		                </td>
+		                </tr>
+		                </table>
+		            </div>
+		            <div class="button">
+				        <input type="submit" 
+				               id="ext_field-action-button" 
+				               name="ext_field-action-button" 
+				               class="{{ class }}"  
+				               value="{{ value }}"  
+				               data-module="confirm_actions" 
+				               data-module-url_action="{{ action_url(action=c.action_multi) }}"
+				               data-module-i18n="{{ notice }}" />
+				      </div>
+		          {% endblock %}
+	         {% endif %}
+	      {% endblock %}
+		{% if packages %}
+		<div class="{{ list_class or 'dataset-list unstyled' }}">
+		    {% block package_list_inner %}
+		    {% for package in packages %}
+			    {% snippet 'snippets/package_item.html', package=package, 
+			                                             item_class=item_class, 
+			                                             hide_resources=hide_resources, 
+			                                             banner=banner, 
+			                                             truncate=truncate, 
+			                                             truncate_title=truncate_title %}
+		    {% endfor %}
+		    {% endblock %}
+		</div>
+		{% else %}
+		  <p class="empty">
+	      {{ _('No result available!') }}
+	      </p>
+		{% endif %}
+        {% block next_action_button %}
+			<div class="button">
+		            <input type="submit" 
+		                   id="ext_field-action-button1" 
+		                   name="ext_field-action-button"
+		                   class="{{ class }}"    
+		                   value="{{ value }}"
+		                   data-module="confirm_actions" 
+		                   data-module-url_action="{{ action_url(action=c.action_multi) }}"
+		                   data-module-i18n="{{ notice }}" /> 
+	       </div>
+	    {% endblock %}
+	</form>
+  </div>
+{% endblock %}

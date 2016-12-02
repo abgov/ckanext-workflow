@@ -1,0 +1,57 @@
+{% import 'macros/form.html' as form %}
+
+{%- set options=[] -%}
+{%- set current_user_name = h.ab_ps_current_user_name() -%}
+{%- set form_decision_restrict_choices_to=field.get('form_decision_restrict_choices_to') -%}
+{% set org_id = data['owner_org'] if data['owner_org'] else '' %}
+{% set last_process_state = data['process_state'] if data['process_state'] else '' %}
+
+
+{%- if not h.scheming_field_required(field) or
+    field.get('form_include_blank_choice', false) -%}
+  {%- do options.append({'value': '', 'text': ''}) -%}
+{%- endif -%}
+
+{%- for c in field.choices -%}
+      {# not need to include draft state if not in create mode #}
+      {% if data['last_process_state'] and c.value == "Draft" %} {# last_process_state exist means not in create mode#}
+         {# do nothing, just pass #}
+      {% else %}
+          {% if h.ab_ps_allow_full_work_flow(current_user_name, org_id) %}
+            {%- do options.append({
+              'value': c.value,
+              'text': h.scheming_language_text(c.label) }) -%}
+          {% else %}
+            {% if not form_decision_restrict_choices_to or not c.value in form_decision_restrict_choices_to %}
+                 {%- do options.append({
+                  'value': c.value,
+                  'text': h.scheming_language_text(c.label) }) -%}
+            {% endif %}
+          {% endif %}
+      {% endif %}
+{%- endfor -%}
+
+{%- if field.get('sorted_choices') -%}
+  {%- set options = options|sort(case_sensitive=false, attribute='text') -%}
+{%- endif -%}
+
+{% resource 'workflow/js/process_state_field.js' %}
+
+
+{% call form.select(
+    field.field_name,
+    id='field-' + field.field_name,
+    label=h.scheming_language_text(field.label),
+    options=options,
+    selected=data[field.field_name],
+    error=errors[field.field_name],
+    classes=['control-medium'],
+    is_required=h.scheming_field_required(field),
+    attrs={"data-module": "process_state_field", 
+           "data-module-is_admin": h.ab_ps_is_admin(current_user_name, org_id) or 
+                                   h.ab_ps_is_authorized_member(current_user_name, org_id, data['process_state'])
+          }
+    )
+%}
+    {%- snippet 'scheming/form_snippets/help_text.html', field=field -%}
+{% endcall %}
