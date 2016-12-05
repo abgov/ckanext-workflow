@@ -16,6 +16,7 @@ from ckan.plugins.toolkit  import c
 import ckan.lib.helpers as h
 import re
 
+
 class WorkflowPlugin(plugins.SingletonPlugin):
     """
         This class includes process state field and control work flow on it, also
@@ -30,7 +31,7 @@ class WorkflowPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IValidators)
-    
+
     """ 
         Monkey patching PackageController's behavior. The process state of 'draft' state
         should have metadata and new resource creation separated.
@@ -39,7 +40,7 @@ class WorkflowPlugin(plugins.SingletonPlugin):
 
 
     """
-    IActions
+    IAction
     """
     def get_actions(self):
         actions = dict((name, function) for name, function
