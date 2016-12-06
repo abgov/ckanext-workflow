@@ -59,7 +59,6 @@ Example:
 
             {% block heading_meta %}
                 {% if package.process_state %}
-                    {% resource 'workflow/css/main.css' %}
                     <span class="label process_state_{{ package.process_state|lower }}" ><i class="{{ 'label label-info' if package.process_state == 'Approved' else 'icon-lock' }}" ></i>{{ _(package.process_state) }}</span>
                 {% endif %}
             {% endblock %}
