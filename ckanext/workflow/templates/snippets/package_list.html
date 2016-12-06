@@ -67,7 +67,7 @@
 		            <div class="control-group">
 		            	<table>
 		            	<tr>
-		            	<td>
+		            	<td class='wf_td'>
 		                <input type="checkbox" 
 		                       id="ext_field-filters" 
 		                       name="ext_field-filters"
@@ -78,10 +78,10 @@
 		                       {{ all_dataset_url(org=org, url=h.full_current_url()) }}
 		                       />
 		                </td>
-		                <td>
+		                <td  class='wf_td'>
 		                  <label class="control-label" for="ext_ext_field-filters-select" form="form_filter">{{ _('Filters') }}&nbsp;&nbsp;&nbsp;</label>
 		                </td> 
-		                <td> 
+		                <td  class='wf_td'> 
 		                  <select id="ext_field-filters-select" 
 		                          name="ext_field-filters-select"
 		                          data-module="filters_select"
@@ -101,7 +101,7 @@
 		            <div class="control-group">
 		            	<table>
 		            	<tr>
-		            	<td class="process_state_td">
+		            	<td class="process_state_td  wf_td">
 		                <input type="checkbox" 
 		                       id="ext_field-actions" 
 		                       name="ext_field-actions"
@@ -110,10 +110,10 @@
 		                       {{ all_dataset_url(org=org, url=h.full_current_url()) }}
 		                   />
 		                </td>
-		                <td>
+		                <td class='wf_td'>
 		                   <label class="control-label" for="ext_field-actions-select">{{ _('Actions') }}</label>
 		                </td>
-		                <td>
+		                <td class='wf_td'>
 		                  <select id="ext_field-actions-select" 
 		                          name="ext_field-actions-select" 
 		                          data-module="actions_select"

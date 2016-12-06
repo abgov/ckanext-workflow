@@ -26,7 +26,7 @@
   color: #d9534f; 
 }
 
-td {
+.wf_td {
 	display: inline-block;
     vertical-align: middle;
 }
