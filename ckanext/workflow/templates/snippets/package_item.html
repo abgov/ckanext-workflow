@@ -1,87 +1,38 @@
 {% ckan_extends %}
 
-{#
-Displays a single of dataset.
-
-package        - A package to display.
-item_class     - The class name to use on the list item.
-hide_resources - If true hides the resources (default: false).
-banner         - If true displays a popular banner (default: false).
-truncate       - The length to trucate the description to (default: 180)
-truncate_title - The length to truncate the title to (default: 80).
-
-Example:
-
-{% snippet 'snippets/package_item.html', package=c.datasets[0] %}
-
-#}
-{% set query = c.q %}
-{% set pubtype = package.type %}
-{% set truncate = truncate or 300 %}
-{% set truncate_title = truncate_title or 80 %}
-{% set title = package.title or package.name %}
-{% set notes = h.markdown_extract(package.notes, extract_length=truncate) %}
-{% set modified_date = h.render_datetime(package.date_modified) %}
-{% set allow_full_work_flow = h.ab_ps_allow_full_work_flow(h.ab_ps_current_user_name(), package.owner_org) %}
-{# set ministry = package.organization.title #}
 {%- if c.action_multi -%}
   {%- set mark_notice = "Mark to " + c.action_multi|lower -%}
 {%- endif -%}
-
+{% set allow_full_work_flow = h.ab_ps_allow_full_work_flow(h.ab_ps_current_user_name(), package.owner_org) %}
 
 {% block package_item %}
-{% if c.process_state and c.process_state == package.process_state or not c.process_state  %}
-  <div class="row {{ item_class or "dataset-item" }}">
-      {% block mark_action %}
-        {%- if c.action_multi == 'Deactivate' and package.process_state == "Approved" and allow_full_work_flow
-                or 
-              c.action_multi == 'Reactivate'  and package.process_state != "Approved" and allow_full_work_flow 
-                or
-              c.action_multi == 'Delete'  -%}
-        <div class="checkbox">
-          <label for="{{ package.id }}" 
-                 name="pkg-item-action-label" 
-                 class="lable-danger-item-actions">
-              <input type="checkbox" 
-                     id="{{ package.id }}" 
-                     name="{{ package.id }}"  />{{ _(mark_notice) }}
-          </label> 
-        </div>
-        {%- endif -%}
-      {% endblock %} 
-      <div class="col-sm-12 col-md-8 nopadding">
-      {% block content %}
-      <div class="dataset-content">
-          {% block heading %}
-            {% block heading_title %}
-            {{ super()}}
-            {% endblock %}
-
-            {% block heading_meta %}
-                {% if package.process_state %}
-                    <span class="label process_state_{{ package.process_state|lower }}" ><i class="{{ 'label label-info' if package.process_state == 'Approved' else 'icon-lock' }}" ></i>{{ _(package.process_state) }}</span>
-                {% endif %}
-            {% endblock %}
-
-          {% endblock %}
-
-          {% block banner %}
-            {{ super() }}
-          {% endblock %}
-
-          {% block notes %}
-          {{ super() }}
-          {% endblock %}
-          <br/>
-      </div>
-      </div>
-      {% block resources %}
-         {{ super() }}
+  {% if c.process_state and c.process_state == package.process_state or not c.process_state  %}
+    <div class="row {{ item_class or "dataset-item" }}">
+        {% block mark_action %}
+          {%- if c.action_multi == 'Deactivate' and package.process_state == "Approved" and allow_full_work_flow
+                  or 
+                c.action_multi == 'Reactivate'  and package.process_state != "Approved" and allow_full_work_flow 
+                  or
+                c.action_multi == 'Delete'  -%}
+          <div class="checkbox">
+            <label for="{{ package.id }}" 
+                   name="pkg-item-action-label" 
+                   class="lable-danger-item-actions">
+                <input type="checkbox" 
+                       id="{{ package.id }}" 
+                       name="{{ package.id }}"  />{{ _(mark_notice) }}
+            </label> 
+          </div>
+          {%- endif -%}
         {% endblock %}
+      </div>
+  {% endif %}
 
+  {{ super() }}
+{% endblock %}
 
-
-      {% endblock %}
-  </div>
-{% endif %}
+{% block heading_meta %}
+    {% if package.process_state %}
+        <span class="label process_state_{{ package.process_state|lower }}" ><i class="{{ 'label label-info' if package.process_state == 'Approved' else 'icon-lock' }}" ></i>{{ _(package.process_state) }}</span>
+    {% endif %}
 {% endblock %}
