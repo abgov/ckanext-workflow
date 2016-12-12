@@ -53,13 +53,14 @@ this.ckan.module('confirm_actions', function (jQuery, _) {
      * Returns nothing.
      */
     confirm: function () {
+
       this.sandbox.body.append(this.createModal());
       this.modal.modal('show');
       // Center the modal in the middle of the screen.
-      this.modal.css({
+      /*this.modal.css({
         'margin-top': this.modal.height() * -0.5,
         'top': '50%'
-      });
+      });*/
     },
 
     /* Performs the action for the current item.
