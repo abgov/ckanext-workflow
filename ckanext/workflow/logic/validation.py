@@ -19,7 +19,7 @@ def scheming_required(key, flattened_data, errors, context):
     data_dict = unflatten(flattened_data)
     if data_dict['process_state'] in helpers.get_process_state_list_not_allow_incomplete(data_dict['type']):
         if key[0] in helpers.get_required_fields_name(data_dict['type']):
-            if not data_dict[key[0]]:
+            if not data_dict[key[0]] or data_dict[key[0]] == '[]':
                 raise Invalid(_('Missing value'))
 
 
