@@ -66,9 +66,11 @@ class WorkflowPlugin(plugins.SingletonPlugin):
             if not pkg_dict.get('private'): # public
                 pkg_dict['process_state'] = 'Approved'
                 pkg_dict['last_process_state'] = 'Approved'
+                pkg_dict['state'] = 'active'
             else:
                 pkg_dict['process_state'] = 'Modified'
                 pkg_dict['last_process_state'] = 'Modified'
+                pkg_dict['state'] = 'active'
     
         
     def _check_extras(self, pkg_dict):
@@ -139,8 +141,10 @@ class WorkflowPlugin(plugins.SingletonPlugin):
         if not pkg_dict.get('process_state') and not ps_exist:
             if not pkg_dict.get('private'):
                 pkg_dict['process_state'] = 'Approved'
+                pkg_dict['state'] = 'active'
             else:
                 pkg_dict['process_state'] = 'Modified' 
+                pkg_dict['state'] = 'active'
             # has to update the old dataset in database to support new feature like 
             # on process_state
             import pprint
