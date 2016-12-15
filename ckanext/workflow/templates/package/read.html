@@ -1,0 +1,8 @@
+{% ckan_extends %}
+
+{% block after_title_line %}
+    {% if pkg.process_state %}
+        <span class="label process_state_{{ pkg.process_state|lower }}" ><i class="{{ 'label label-info' if pkg.process_state == 'Approved' else 'icon-lock' }}" ></i>{{ _(pkg.process_state) }}</span>
+    {% endif %}
+{% endblock %}
+
