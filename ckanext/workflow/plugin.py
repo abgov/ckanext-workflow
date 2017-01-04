@@ -15,6 +15,8 @@ from logic import validation
 from ckan.plugins.toolkit  import c
 import ckan.lib.helpers as h
 import re
+from datetime import date, datetime
+import dateutil.parser as parser
 
 
 class WorkflowPlugin(plugins.SingletonPlugin):
@@ -52,6 +54,10 @@ class WorkflowPlugin(plugins.SingletonPlugin):
     IPackageController
     """       
     def after_show(self, context, pkg_dict):
+        if not helpers.has_process_state_field_in_schema(pkg_dict['type']) or pkg_dict['state'] == 'deleted':
+            return
+        if pkg_dict['state'] == 'draft' and pkg_dict['process_state'] == 'Draft':
+            pkg_dict['state'] = 'active'
         package_last_process_state = get_package_last_process_state(context['session'], 
         	                                                        pkg_dict['id'])
         #set up the last_process_state field's value.
@@ -82,7 +88,7 @@ class WorkflowPlugin(plugins.SingletonPlugin):
         return ps_exist
 
                     
-    def _update_extra(self, context, pkg_dict):
+    def _update_package_process_state_table(self, context, pkg_dict):
         # pkg_dict does not bring up all fields to UI
         pkg_dict = toolkit.get_action("package_show")(data_dict={"id": pkg_dict['id']})
         package_last_process_state = get_package_last_process_state(context['session'], 
@@ -105,34 +111,82 @@ class WorkflowPlugin(plugins.SingletonPlugin):
                ps and ps == "Rejected" and pkg_dict['reason'] != last_reason:
             add_package_process_state(context['session'], pkg_dict, modifior_id=modifior_id)
 
+
+    def _check_published_date(self, pkg_dict):
+        is_future_date = False
+        if helpers.has_published_date_field_in_schema(pkg_dict['type']):
+            if pkg_dict.has_key('published_date') and pkg_dict['published_date']:
+                dt = parser.parse(pkg_dict['published_date']).date()
+                if dt > date.today():
+                    is_future_date = True
+        return is_future_date
+
+
+    def _check_published_date_exist_any_empty(self, pkg_dict):
+        if helpers.has_published_date_field_in_schema(pkg_dict['type']):
+            if pkg_dict.has_key('published_date') and not pkg_dict['published_date'] or \
+                not pkg_dict.has_key('published_date'):
+                return True
+        return False
+
                 
-    def _update_state(self, context, pkg_dict):
+    def _update_pkg(self, context, pkg_dict):
         # state field is not in pkg_dict.
         pkg_dict = toolkit.get_action('package_show')(data_dict={'id': pkg_dict['id']})
-        if pkg_dict.get("process_state"):
-            if pkg_dict['process_state'] != 'Draft' and \
-               not pkg_dict['state'] in ['active', 'deleted']:
+
+        update_flag = False
+        # update state field
+        if pkg_dict.get("process_state") and pkg_dict['state'] != "deleted":
+            if pkg_dict['process_state'] != 'Draft' and pkg_dict['state'] == "draft":
                 pkg_dict['state'] = 'active' 
-                pkg_dict = toolkit.get_action('package_update')(data_dict=pkg_dict)
-            if pkg_dict['process_state'] == 'Draft' and \
-               not pkg_dict['state'] in ['draft', 'deleted']:
-                pkg_dict['state'] = 'draft' 
-                pkg_dict = toolkit.get_action('package_update')(data_dict=pkg_dict)
+                update_flag = True
+
+        # update private field
+        is_future_date = self._check_published_date(pkg_dict)
+        if pkg_dict['process_state'] == 'Approved':
+            if pkg_dict['private'] and not is_future_date: 
+            # there is published_date in schema file and not a future day 
+            # or there is no published_date in schema file.
+                pkg_dict['private'] = False
+                update_flag = True
+                if self._check_published_date_exist_any_empty(pkg_dict):
+                    pkg_dict['published_date'] = datetime.now()
+            elif not pkg_dict['private'] and is_future_date:
+                pkg_dict['private'] = True
+                update_flag = True
+        elif pkg_dict['process_state'] != 'Approved' and  not pkg_dict['private']:
+            pkg_dict['private'] = True
+            update_flag = True
+        
+        if update_flag:
+            pkg_dict = toolkit.get_action('package_update')(data_dict=pkg_dict)
 
 
     def after_update(self, context, pkg_dict):
-        self._update_extra(context, pkg_dict)
-        self._update_state(context, pkg_dict)
+        if not pkg_dict.has_key('state'):
+            pkg_dict['state'] = 'draft'
+        if not helpers.has_process_state_field_in_schema(pkg_dict['type']) or pkg_dict['state'] == 'deleted':
+            return
+        self._update_package_process_state_table(context, pkg_dict)
+        self._update_pkg(context, pkg_dict)
         return super(WorkflowPlugin, self).after_update(context, pkg_dict)
 
                 
     def after_create(self, context, pkg_dict):
-        self._update_extra(context, pkg_dict)
-        self._update_state(context, pkg_dict)
+        if not pkg_dict.has_key('state'):
+            pkg_dict['state'] = 'draft'
+        if not helpers.has_process_state_field_in_schema(pkg_dict['type']) or pkg_dict['state'] == 'deleted':
+            return
+        self._update_package_process_state_table(context, pkg_dict)
+        self._update_pkg(context, pkg_dict)
         return super(WorkflowPlugin, self).after_create(context, pkg_dict)
     
 
     def before_view(self, pkg_dict):
+        if pkg_dict['state'] == 'deleted':
+            return pkg_dict
+        if not helpers.has_process_state_field_in_schema(pkg_dict['type']):
+            return pkg_dict
         if not pkg_dict.get('reason'):
             pkg_dict['reason'] = 'NA'
         #handle old data with no process_state field
@@ -147,9 +201,7 @@ class WorkflowPlugin(plugins.SingletonPlugin):
                 pkg_dict['state'] = 'active'
             # has to update the old dataset in database to support new feature like 
             # on process_state
-            import pprint
-            pprint.pprint(pkg_dict)
-            toolkit.get_action('package_update')(data_dict=pkg_dict)
+            #toolkit.get_action('package_update')(data_dict=pkg_dict)
         return pkg_dict
 
     def before_search(self, search_params):
@@ -198,7 +250,10 @@ class WorkflowPlugin(plugins.SingletonPlugin):
             'ab_ps_get_all_process_states': helpers.get_all_process_states,
             'ab_ps_get_required_fields_name': helpers.get_required_fields_name,
             'ab_ps_get_process_state_list_not_allow_incomplete': helpers.get_process_state_list_not_allow_incomplete,
-            'ab_ps_get_dataset_types': helpers.get_dataset_types
+            'ab_ps_get_dataset_types': helpers.get_dataset_types,
+            'ab_ps_has_process_state_field_in_schema': helpers.has_process_state_field_in_schema,
+            'ab_ps_get_required_items_missing': helpers.get_required_items_missing,
+            'ab_ps_is_in_process_state_list_not_allow_incomplete': helpers.is_in_process_state_list_not_allow_incomplete
         }
 
     """
