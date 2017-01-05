@@ -3,6 +3,7 @@
 {%- set options=[] -%}
 {%- set current_user_name = h.ab_ps_current_user_name() -%}
 {%- set form_decision_restrict_choices_to=field.get('form_decision_restrict_choices_to') -%}
+{%  set form_not_allow_incomplete_dataset = field.get('form_not_allow_incomplete_dataset') %}
 {% set org_id = data['owner_org'] if data['owner_org'] else '' %}
 {% set last_process_state = data['process_state'] if data['process_state'] else '' %}
 
@@ -14,8 +15,14 @@
 
 {%- for c in field.choices -%}
       {# not need to include draft state if not in create mode #}
-      {% if data['last_process_state'] and c.value == "Draft" %} {# last_process_state exist means not in create mode#}
-         {# do nothing, just pass #}
+      {% if data['last_process_state'] and c.value == "Draft" %} {# edit mode#}
+         {# Daft not included in eidt mode #}
+      {% elif not data['last_process_state'] and c.value == "Submitted" %} {# create mode#}
+         {# Submitted not included in create mode #}
+      {% elif data['last_process_state'] and 
+              h.ab_ps_get_required_items_missing(data) and 
+              c.value in form_not_allow_incomplete_dataset %} {# Modified state, edit mode#}
+         {# Not include Submitted, Pending, Rejected, Approved states #}    
       {% else %}
           {% if h.ab_ps_allow_full_work_flow(current_user_name, org_id) %}
             {%- do options.append({
@@ -53,5 +60,6 @@
           }
     )
 %}
+
     {%- snippet 'scheming/form_snippets/help_text.html', field=field -%}
 {% endcall %}

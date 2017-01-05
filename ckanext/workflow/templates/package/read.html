@@ -1,8 +1,28 @@
 {% ckan_extends %}
 
-{% block after_title_line %}
-    {% if pkg.process_state %}
-        <span class="label process_state_{{ pkg.process_state|lower }}" ><i class="{{ 'label label-info' if pkg.process_state == 'Approved' else 'icon-lock' }}" ></i>{{ _(pkg.process_state) }}</span>
+
+{% block package_description %}
+    {% if pkg.private %}
+      <span class="dataset-private label label-inverse pull-right">
+        <i class="icon-lock"></i>
+        {{ _('Private') }}
+      </span>
     {% endif %}
+    <h1>
+      {% block page_heading %}
+        {{ super() }}
+      {% endblock %}
+    </h1>
+    {% block after_title_line %}
+	    {% if pkg.process_state %}
+	        <span class="label process_state_{{ pkg.process_state|lower }}" ><i class="{{ 'label label-info' if pkg.process_state == 'Approved' else 'icon-lock' }}" ></i>{{ _(pkg.process_state) }}</span>
+	    {% endif %}
+	{% endblock %}
+    {% block package_notes %}
+      {{ super() }}
+    {% endblock %}
+    {# FIXME why is this here? seems wrong #}
+    <span class="insert-comment-thread"></span>
 {% endblock %}
+
 

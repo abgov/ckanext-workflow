@@ -121,6 +121,15 @@ Usage
           "validators": "scheming_required" 
         }
 
+1.1  (Optional) Put this block into your json schema file, the approved state will look up this date for approve and private field false:
+        {
+          "field_name": "published_date",
+          "label": "Publish on this future date.",
+          "preset": "date",
+          "form_placeholder": "date_format='%Y-%m-%d'",
+          "help_text": "The date on which an information resource will be automatically published.",
+          "help_inline": false
+        }
 
 2. If use "required": true and "validators": "scheming_required" in your schema json file, change 
 "scheming_required" into "ab_ps_scheming_required". It will validate fields only on "Submitted", 

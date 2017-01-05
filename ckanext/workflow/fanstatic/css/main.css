@@ -30,3 +30,16 @@
 	display: inline-block;
     vertical-align: middle;
 }
+
+div.container {
+	display: block;
+	width: auto;
+}
+
+.notice {
+  background-color: #cce6ff;
+}
+
+.ready {
+  background-color: #adebad;
+}

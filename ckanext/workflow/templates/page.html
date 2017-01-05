@@ -1,0 +1,47 @@
+{% ckan_extends %}
+
+{%- set current_user_name = h.ab_ps_current_user_name() -%}
+{% set org_id = c.pkg.owner_org if c.pkg.owner_org else '' %}
+
+{% block primary_content %}
+	<article class="module">
+	{% block page_header %}
+		{{ super() }}
+	{% endblock %}
+	<div class="module-content">
+		{% if self.page_primary_action() | trim %}
+			<div class="page_primary_action">
+				{% block page_primary_action %}{% endblock %}
+			</div>
+		{% endif %}
+		{% block missing_notice %}
+		  {% if c.action == "edit" and h.ab_ps_has_process_state_field_in_schema(c.pkg.type) %}
+		  	{% if h.ab_ps_get_required_items_missing(c.pkg) %}
+		  	  <div class="container notice">
+				<h4>Before submit, please finish this items first in Modified state</h4>
+				<ul>
+					{% for m in h.ab_ps_get_required_items_missing(c.pkg) %}
+						<li>  {{ m }} </li>
+					{% endfor %}
+				</ul>
+	          </div>
+	        {% else %}
+	          {% if not h.ab_ps_is_admin(current_user_name, org_id) and 
+                    not h.ab_ps_is_authorized_member(current_user_name, org_id, '') %} {# editor #}
+	            <div class="container ready"> 
+	            	<h4>Submitted and Modified states are ready</h4>
+	            </div>
+	          {% else %} {# admin or aorthorized member #}
+	          	  {% if not h.ab_ps_is_in_process_state_list_not_allow_incomplete(c.pkg.id) %}
+					<div class="container ready"> 
+						<h4>Modified, Submitted, Pending, Rejected, Approved states are ready</h4>
+					</div>	
+				  {% endif %}
+	          {% endif %}
+	        {% endif %}
+          {% endif %}
+		{% endblock %}
+		{% block primary_content_inner %}{% endblock %}
+	</div>
+	</article>
+{% endblock %}
