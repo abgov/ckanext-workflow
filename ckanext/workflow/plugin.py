@@ -4,20 +4,18 @@ import ckanext.workflow.helpers as helpers
 from ckan.controllers.package import PackageController
 from ckan.controllers.group import GroupController
 from ckanext.workflow.controllers.package import _save_new
-from ckanext.workflow.logic import action
 from model.package_process_state_model import (
     get_package_last_process_state, 
     add_package_process_state
 )
-from model import package_process_state_model, member_authorized_workflow_model
+from model import package_process_state_model
 from ckan.config.routing import SubMapper
 from logic import validation
 from ckan.plugins.toolkit  import c
 import ckan.lib.helpers as h
 import re
-from datetime import date, datetime
-import dateutil.parser as parser
-
+from datetime import date
+from dateutil import parser
 
 class WorkflowPlugin(plugins.SingletonPlugin):
     """
@@ -29,7 +27,6 @@ class WorkflowPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IConfigurable)
     plugins.implements(plugins.IPackageController, inherit=True)
-    plugins.implements(plugins.IActions)
     plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IValidators)
@@ -40,15 +37,6 @@ class WorkflowPlugin(plugins.SingletonPlugin):
     """
     PackageController._save_new = _save_new 
 
-
-    """
-    IAction
-    """
-    def get_actions(self):
-        actions = dict((name, function) for name, function
-                       in action.__dict__.items()
-                       if callable(function))
-        return actions
 
     """
     IPackageController
@@ -183,9 +171,7 @@ class WorkflowPlugin(plugins.SingletonPlugin):
     
 
     def before_view(self, pkg_dict):
-        if pkg_dict['state'] == 'deleted':
-            return pkg_dict
-        if not helpers.has_process_state_field_in_schema(pkg_dict['type']):
+        if not helpers.has_process_state_field_in_schema(pkg_dict['type']) or pkg_dict['state'] == 'deleted':
             return pkg_dict
         if not pkg_dict.get('reason'):
             pkg_dict['reason'] = 'NA'
@@ -199,9 +185,7 @@ class WorkflowPlugin(plugins.SingletonPlugin):
             else:
                 pkg_dict['process_state'] = 'Modified' 
                 pkg_dict['state'] = 'active'
-            # has to update the old dataset in database to support new feature like 
-            # on process_state
-            #toolkit.get_action('package_update')(data_dict=pkg_dict)
+                
         return pkg_dict
 
     def before_search(self, search_params):
@@ -235,7 +219,6 @@ class WorkflowPlugin(plugins.SingletonPlugin):
     """
     def configure(self, config):
         package_process_state_model.setup()
-        member_authorized_workflow_model.setup()
     
     """
     ITemplateHelpers
@@ -244,7 +227,7 @@ class WorkflowPlugin(plugins.SingletonPlugin):
         return {
             'ab_ps_is_admin': helpers.is_admin,
             'ab_ps_current_user_name': helpers.current_user_name,
-            'ab_ps_is_authorized_member': helpers.is_authorized_member,
+            'ab_ps_is_member_approver': helpers.is_member_approver,
             'ab_ps_get_package_process_state_by_name': helpers.get_package_process_state_by_name,
             'ab_ps_allow_full_work_flow': helpers.allow_full_work_flow,
             'ab_ps_get_all_process_states': helpers.get_all_process_states,
@@ -253,6 +236,7 @@ class WorkflowPlugin(plugins.SingletonPlugin):
             'ab_ps_get_dataset_types': helpers.get_dataset_types,
             'ab_ps_has_process_state_field_in_schema': helpers.has_process_state_field_in_schema,
             'ab_ps_get_required_items_missing': helpers.get_required_items_missing,
+            'ab_ps_has_process_state_field': helpers.has_process_state_field,
             'ab_ps_is_in_process_state_list_not_allow_incomplete': helpers.is_in_process_state_list_not_allow_incomplete
         }
 
@@ -260,13 +244,6 @@ class WorkflowPlugin(plugins.SingletonPlugin):
     IRoutes
     """
     def before_map(self, map):
-        controller = 'ckanext.workflow.controllers:MemberAuthorizedController'
-        with SubMapper(map, controller=controller) as m:
-            m.connect('authorized_members', '/organization/{id}/authorized_members',
-                      action='manage', ckan_icon='user')
-            m.connect('authorized_members_remove', '/organization/{id}/authorized_members_remove',
-                      action='remove')
-
         # for actions on user's dashboard or organization
         map.connect('deactivate-multiple', '/datasets/deactivate-multiple',
                   controller='ckanext.workflow.controllers:PackagesDeactivateController',

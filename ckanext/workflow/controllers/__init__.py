@@ -1,7 +1,3 @@
-from .member_authorized_controller import (
-    MemberAuthorizedController,
-)
-
 from .actions_multiple_datasets_controller import (
     PackagesDeleteController,
     PackagesDeactivateController,
