@@ -27,7 +27,7 @@
 	          </div>
 	        {% else %}
 	          {% if not h.ab_ps_is_admin(current_user_name, org_id) and 
-                    not h.ab_ps_is_authorized_member(current_user_name, org_id, '') %} {# editor #}
+                   not h.ab_ps_is_member_approver(current_user_name, org_id)%} {# editor #}
 	            <div class="container ready"> 
 	            	<h4>Submitted and Modified states are ready</h4>
 	            </div>

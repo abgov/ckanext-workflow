@@ -145,9 +145,9 @@ Usage
 4. Rebuild index and restart solr.
 
 
-5. Go to organization management, you can find a tag name "Work flow". You can authorize editor of 
-the same organization to work out the full work flow. If authorized, the editor can see the change
-in the list of process_state field when editing a dataset. 
+5. Go to organization management, a new role 'Workflow Approver' is added into member list. This role 
+is based on editor plus the extra workflow permission. If choose this role, he can not only act as editor 
+but also be able to perform the full work flow permission as admin, but with no other admin permission. 
 
 
 6. If want more flexible with no resource when switch to "Submitted", "Pending", "Rejected", "Approved",

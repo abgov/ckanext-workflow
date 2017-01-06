@@ -2,7 +2,6 @@ from ckan.plugins import toolkit
 import ckan.authz as authz
 import ckan.model as model
 from ckanext.workflow.logic.action.member_authorization import get_member_username_orgname
-from ckanext.workflow.model  import MemberAuthorizedWorkflow
 from ckan.plugins.toolkit import  Invalid, _
 import  ckanext.scheming.helpers as h
 import pylons.config as config
@@ -38,8 +37,8 @@ def current_user_name():
         return None
 
 
-def is_authorized_member(user, org, process_state):
-    """ check if user is authorized member of full work flow 
+def is_member_approver(user, org):
+    """ check if user is authorized member of full work flow
         params: user: name or id,
                 org : name or id,
         rtype: boolean
@@ -47,18 +46,8 @@ def is_authorized_member(user, org, process_state):
     if not org or not user:
         return False
     username = model.User.get(user).name
-    groupname = model.Group.get(org).name
-    data_dict = {'username': username, 'groupname': groupname}
-    try:
-        member, username, orgnmae = get_member_username_orgname(data_dict)
-    except NotFound: 
-        # For all users if dataset is public
-        if process_state == "Approved":
-            return True
-        else: 
-            return False
-    session = model.Session
-    if MemberAuthorizedWorkflow.exists(session, member):
+    orgname = model.Group.get(org).name
+    if authz.has_user_permission_for_group_or_org(orgname, username, 'workflow'):
         return True
     return False
 
@@ -71,7 +60,7 @@ def allow_full_work_flow(user, org):
     """
     if not user or not org:
         return None
-    return is_admin(user, org) or is_authorized_member(user, org, '')
+    return is_admin(user, org) or is_member_approver(user, org)
 
 
 def get_package_process_state_by_name(pkg_name):
