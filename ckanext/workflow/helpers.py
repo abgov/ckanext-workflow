@@ -1,7 +1,6 @@
 from ckan.plugins import toolkit
 import ckan.authz as authz
 import ckan.model as model
-from ckanext.workflow.logic.action.member_authorization import get_member_username_orgname
 from ckan.plugins.toolkit import  Invalid, _
 import  ckanext.scheming.helpers as h
 import pylons.config as config
