@@ -54,9 +54,9 @@ class PackagesDownloadController(PackageController):
                     ids.append(pkg_dict['name'])
                     count += 1
                 if count == 0:
-                    h.flash_notice(_('No datasets has been deleted.'))
+                    h.flash_notice(_('No datasets has been downloaded.'))
                 else:
-                    h.flash_notice(_('Datasets have been deleted.'))
+                    h.flash_notice(_('Datasets have been downloaded.'))
                 if ids:
                     url = "/api/3/action/package_show_multiple?ids=" + \
                           "{0}&download=true".format(','.join(ids))
