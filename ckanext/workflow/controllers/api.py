@@ -54,9 +54,9 @@ def download_multiple(fn):
                       o.close()
                 response_data = oz.getvalue()
                 oz.close()
-            elif not flag and not isinstance(response_data, str):
+            elif not flag and isinstance(response_data, dict):
                 response_data = json.dumps(response_data, indent=2)
-                
+
         return fn(self, response_data, content_type, resource_location)
 
     return decorate_finish_ok
