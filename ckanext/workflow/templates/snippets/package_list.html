@@ -126,6 +126,7 @@
 		                        <option value="Reactivate" {%- if c.action_multi  == "Reactivate" -%} {{ "selected" }} {%- endif -%}>{{ _("Reactivate") }}</option>
 		                      {% endif %}
 	                          <option value="Delete"  {%- if c.action_multi == "Delete" -%} {{ "selected" }} {%- endif -%}>{{ _("Delete") }}</option>
+                              <option value="Download"  {%- if c.action_multi == "Download" -%} {{ "selected" }} {%- endif -%}>{{ _("Download") }}</option>
 	                  </select>
 	                </td>
 	                </tr>

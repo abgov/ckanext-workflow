@@ -13,7 +13,7 @@
                   or 
                 c.action_multi == 'Reactivate'  and package.process_state != "Approved" and allow_full_work_flow 
                   or
-                c.action_multi == 'Delete'  -%}
+                c.action_multi != 'Deactivate' and c.action_multi != 'Reactivate' and c.action_multi != '' -%}
           <div class="checkbox">
             <label for="{{ package.id }}" 
                    name="pkg-item-action-label" 
