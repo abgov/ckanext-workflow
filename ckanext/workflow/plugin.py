@@ -16,6 +16,7 @@ import ckan.lib.helpers as h
 import re
 from datetime import date
 from dateutil import parser
+import pylons.config as config
 
 class WorkflowPlugin(plugins.SingletonPlugin):
     """
@@ -156,6 +157,9 @@ class WorkflowPlugin(plugins.SingletonPlugin):
 
 
     def after_update(self, context, pkg_dict):
+        deployment_mode = toolkit.asbool(config.get('ckan.ab_scheming.deployment', False))
+        if deployment_mode: 
+            return 
         if not pkg_dict.has_key('state'):
             pkg_dict['state'] = 'draft'
         if not helpers.has_process_state_field_in_schema(pkg_dict['type']) or pkg_dict['state'] == 'deleted':
@@ -166,6 +170,9 @@ class WorkflowPlugin(plugins.SingletonPlugin):
 
                 
     def after_create(self, context, pkg_dict):
+        deployment_mode = toolkit.asbool(config.get('ckan.ab_scheming.deployment', False))
+        if deployment_mode: 
+            return 
         if not pkg_dict.has_key('state'):
             pkg_dict['state'] = 'draft'
         if not helpers.has_process_state_field_in_schema(pkg_dict['type']) or pkg_dict['state'] == 'deleted':
