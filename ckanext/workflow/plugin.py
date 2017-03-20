@@ -52,12 +52,9 @@ class WorkflowPlugin(plugins.SingletonPlugin):
                     break
         if pkg_dict['state'] == 'draft' and pkg_dict['process_state'] == 'Draft':
             pkg_dict['state'] = 'active'
-        package_last_process_state = get_package_last_process_state(context['session'], 
-        	                                                        pkg_dict['id'])
+        pkg_dict['last_process_state'] = pkg_dict['process_state']
         #set up the last_process_state field's value.
         curr_user_name = helpers.current_user_name()
-        if package_last_process_state:
-            pkg_dict['last_process_state'] = package_last_process_state.process_state
 
         #set up the process_state field for old dataset with no process_state
         ps_exist = self._check_extras(pkg_dict)
@@ -201,6 +198,9 @@ class WorkflowPlugin(plugins.SingletonPlugin):
         return pkg_dict
 
     def before_search(self, search_params):
+        deployment_mode = toolkit.asbool(config.get('ckan.ab_scheming.deployment', False))
+        if deployment_mode: 
+            return search_params
     	user_member_of_orgs = [org['id'] for org
                                in h.organizations_available('read')]
 
