@@ -52,7 +52,8 @@ class WorkflowPlugin(plugins.SingletonPlugin):
                     break
         if pkg_dict['state'] == 'draft' and pkg_dict['process_state'] == 'Draft':
             pkg_dict['state'] = 'active'
-        pkg_dict['last_process_state'] = pkg_dict['process_state']
+        if 'process_state' in pkg_dict:
+            pkg_dict['last_process_state'] = pkg_dict['process_state']
         #set up the last_process_state field's value.
         curr_user_name = helpers.current_user_name()
 
