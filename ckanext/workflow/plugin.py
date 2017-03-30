@@ -4,6 +4,7 @@ import ckanext.workflow.helpers as helpers
 from ckan.controllers.package import PackageController
 from ckan.controllers.group import GroupController
 from ckanext.workflow.controllers.package import _save_new
+from ckanext.workflow.logic import action
 from model.package_process_state_model import (
     get_package_last_process_state, 
     add_package_process_state
@@ -17,6 +18,10 @@ import re
 from datetime import date
 from dateutil import parser
 import pylons.config as config
+import ckanext.workflow.controllers.api as api
+import ckan.controllers.api as ckan_api
+
+
 
 class WorkflowPlugin(plugins.SingletonPlugin):
     """
@@ -31,6 +36,7 @@ class WorkflowPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.IRoutes, inherit=True)
     plugins.implements(plugins.IConfigurer)
     plugins.implements(plugins.IValidators)
+    plugins.implements(plugins.IActions)
 
     """ 
         Monkey patching PackageController's behavior. The process state of 'draft' state
@@ -38,6 +44,12 @@ class WorkflowPlugin(plugins.SingletonPlugin):
     """
     PackageController._save_new = _save_new 
 
+    """ 
+    Monkey patching here to override 
+    the content type for download of package's metadata .
+    """
+    ckan_api.ApiController._finish_ok = api.download_multiple(ckan_api.ApiController._finish_ok)
+    ckan_api.CONTENT_TYPES = api.CONTENT_TYPES
 
     """
     IPackageController
@@ -267,6 +279,9 @@ class WorkflowPlugin(plugins.SingletonPlugin):
         map.connect('delete-multiple' ,'/datasets/delete-multiple',
                   controller='ckanext.workflow.controllers:PackagesDeleteController',
                   action='delete_datasets')
+        map.connect('download-multiple' ,'/datasets/download-multiple',
+                  controller='ckanext.workflow.controllers:PackagesDownloadController',
+                  action='download_datasets')
 
         # for filters on user's dashboard or organization
         map.connect('dashboard-filter-action', '/dashboard/datasets/filter-action',
@@ -298,3 +313,11 @@ class WorkflowPlugin(plugins.SingletonPlugin):
         return {'ab_ps_scheming_required': validation.scheming_required,
                 'ab_ps_resource_required': validation.resource_required}
 
+    """
+    IAction
+    """
+    def get_actions(self):
+        actions = dict((name, function) for name, function
+                       in action.__dict__.items()
+                       if callable(function))
+        return actions

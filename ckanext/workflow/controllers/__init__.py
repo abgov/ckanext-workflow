@@ -1,7 +1,8 @@
 from .actions_multiple_datasets_controller import (
     PackagesDeleteController,
     PackagesDeactivateController,
-    PackagesReactivateController
+    PackagesReactivateController,
+    PackagesDownloadController
 )
 
 from .filter_action_controller import (

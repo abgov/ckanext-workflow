@@ -28,6 +28,52 @@ def get_context_org_url():
     return context, org, url
 
 
+class PackagesDownloadController(PackageController):
+    """ This is used to delete multiple datasets"""
+    def download_datasets(self):
+        """ If org exist, it will handle delete in organization's
+            read()'s datasets, then return to organization's read().
+            If not exsit, it will handle delete in user's dashboard()'s 
+            datasets, then return to user's dashboard().
+        """
+        if 'cancel' in request.params:
+            h.redirect_to(controller='package', action='search')
+
+        context, org, url = get_context_org_url()
+
+        dataset_type = ''
+        ids = []
+        try:
+            if request.method == 'POST':
+                count = 0
+                for id in request.params:
+                    if re.match('ext_field-', id):
+                        continue
+                    pkg_dict = get_action('package_show')(context, {'id': id})
+                    dataset_type = pkg_dict['type']
+                    ids.append(pkg_dict['name'])
+                    count += 1
+                if count == 0:
+                    h.flash_notice(_('No datasets has been downloaded.'))
+                else:
+                    h.flash_notice(_('Datasets have been downloaded.'))
+                if ids:
+                    url = "/api/3/action/package_show_multiple?ids=" + \
+                          "{0}&download=true".format(','.join(ids))
+                h.redirect_to(url)
+        except NotAuthorized:
+            abort(401, _('Unauthorized to delete package %s') % '')
+        except NotFound:
+            abort(404, _('Dataset not found'))
+        dataset_type = dataset_type if dataset_type else 'dataset'
+        if org:
+            return render('/organization/'+org)
+        else:
+            return render('/dashboard/datasets',
+                      extra_vars={'dataset_type': dataset_type})
+
+
+
 class PackagesDeleteController(PackageController):
     """ This is used to delete multiple datasets"""
     def delete_datasets(self):
