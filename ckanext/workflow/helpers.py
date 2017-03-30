@@ -210,9 +210,9 @@ def is_in_process_state_list_not_allow_incomplete(pkg_id):
     except NotFound:
         return False
     else:
-        last_process_state = pkg_dict['last_process_state']
+        process_state = pkg_dict['process_state']
         lst = get_process_state_list_not_allow_incomplete(pkg_dict['type'])
-        if last_process_state in lst:
+        if process_state in lst:
             return True
         else:
             return False

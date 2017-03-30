@@ -17,6 +17,7 @@ import ckan.lib.helpers as h
 import re
 from datetime import date
 from dateutil import parser
+import pylons.config as config
 import ckanext.workflow.controllers.api as api
 import ckan.controllers.api as ckan_api
 
@@ -56,14 +57,17 @@ class WorkflowPlugin(plugins.SingletonPlugin):
     def after_show(self, context, pkg_dict):
         if not helpers.has_process_state_field_in_schema(pkg_dict['type']) or pkg_dict['state'] == 'deleted':
             return
+        if not 'process_state' in pkg_dict and 'extras' in pkg_dict:
+            for e in pkg_dict['extras']:
+                if e['key'] == 'process_state':
+                    pkg_dict['process_state'] = e['value']
+                    break
         if pkg_dict['state'] == 'draft' and pkg_dict['process_state'] == 'Draft':
             pkg_dict['state'] = 'active'
-        package_last_process_state = get_package_last_process_state(context['session'], 
-        	                                                        pkg_dict['id'])
+        if 'process_state' in pkg_dict:
+            pkg_dict['last_process_state'] = pkg_dict['process_state']
         #set up the last_process_state field's value.
         curr_user_name = helpers.current_user_name()
-        if package_last_process_state:
-            pkg_dict['last_process_state'] = package_last_process_state.process_state
 
         #set up the process_state field for old dataset with no process_state
         ps_exist = self._check_extras(pkg_dict)
@@ -163,6 +167,9 @@ class WorkflowPlugin(plugins.SingletonPlugin):
 
 
     def after_update(self, context, pkg_dict):
+        deployment_mode = toolkit.asbool(config.get('ckan.ab_scheming.deployment', False))
+        if deployment_mode: 
+            return 
         if not pkg_dict.has_key('state'):
             pkg_dict['state'] = 'draft'
         if not helpers.has_process_state_field_in_schema(pkg_dict['type']) or pkg_dict['state'] == 'deleted':
@@ -173,6 +180,9 @@ class WorkflowPlugin(plugins.SingletonPlugin):
 
                 
     def after_create(self, context, pkg_dict):
+        deployment_mode = toolkit.asbool(config.get('ckan.ab_scheming.deployment', False))
+        if deployment_mode: 
+            return 
         if not pkg_dict.has_key('state'):
             pkg_dict['state'] = 'draft'
         if not helpers.has_process_state_field_in_schema(pkg_dict['type']) or pkg_dict['state'] == 'deleted':
@@ -201,6 +211,9 @@ class WorkflowPlugin(plugins.SingletonPlugin):
         return pkg_dict
 
     def before_search(self, search_params):
+        deployment_mode = toolkit.asbool(config.get('ckan.ab_scheming.deployment', False))
+        if deployment_mode: 
+            return search_params
     	user_member_of_orgs = [org['id'] for org
                                in h.organizations_available('read')]
 
